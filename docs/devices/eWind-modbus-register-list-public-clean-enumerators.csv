@@ -1,0 +1,64 @@
+﻿Enumerators;;;;;;
+;;;;;;
+Sub-type (ref);Label;Value;;Sub-type (ref);Label;Value
+Enumeration enabledisable;;;;Enumeration alarmstate;;
+;Disable;0;;;Off;0
+;Enable;1;;;Acked;1
+;;;;;On;2
+Enumeration allowdeny;;;;;;
+;Deny;0;;Enumeration mode;;
+;Allow;1;;;Home;0
+;;;;;Max. cooling;1
+Enumeration onoff;;;;;Max. heating;2
+;Off;0;;;Alarm A;4
+;On;1;;;Stop;8
+;;;;;Away mode;16
+Enumeration analogIn;;;;; mode;32
+;No input;0;;;Temperature boost;64
+;CO₂ sensor 1;1;;;CO₂ boosting;128
+;CO₂ sensor 2;2;;;%RH boosting;256
+;CO₂ sensor 3;3;;;Manual boost;512
+;%RH sensor 1;4;;;Overpressure mode;1024
+;%RH sensor 2;5;;;Cooker hood on;2048
+;%RH sensor 3;6;;;Central vacuum cleaner on;4096
+;Ouside air temperature sensor;7;;; mode;8192
+;Room temperature sensor 1;8;;;Summer night cooling;16384
+;Room temperature sensor 2;9;;;Defrosting;32768
+;Room temperature sensor 3;10;;;;
+;External deviation for temperature setpoint;11;;Enumeration tempstep;;
+;Constant supply air duct pressure sensor PDE10;15;;;None;0
+;Constant extract air duct pressure sensor PDE30;16;;;Cooling;1
+;Aqua water tank temperature TE80;131;;;Heat recovery;2
+;Aqua cool water tank temperature TE70;132;;;Heating;4
+;Aqua cool return water temperature from cooling load and tank TE71;133;;;Summer night cooling;6
+;RH sensor for outside air humidity;140;;;Starting up;7
+;RH sensor for waste air humidity;141;;;Dehumidification;8
+;;;;;;
+Enumeration alarmtypes;;;;Enumeration modbusspeed;;
+;No alarm;0;;;9600;1
+;TE05 min;1;;;19200;2
+;TE10 min;2;;;115200;3
+;TE10 max;3;;;;
+;TE20 max;4;;Enumeration modbusparity;;
+;TE30 min;5;;;None;1
+;TE30 max;6;;;Even;2
+;Heat pump;7;;;;
+;EH-alarm;8;;Enumeration miscconfbitfield;;
+;TE45 min;9;;;TE31 temperature limitation with fixed limits (Pelican HP);2
+;HRW;10;;;HP fan extended runtime (see reg. 161);4
+;Cooling alarm (unused);11;;;TE31 temperature limitation with PI controller (Pegasos/Pallas HP);8
+;Emergency stop;12;;;On/off cascade controller function (Heating);16
+;External alarm;13;;;MDX compressor effect limitation using TE62;64
+;Service reminder;14;;;;
+;PDS10;15;;Enumeration escfanspeed;;
+;Supply filter high;16;;;Fanspeed level 1 (Away-mode);1
+;Extract filter high;17;;;Fanspeed level 2 (Home-mode);2
+;Supply fan pressure;20;;;Fanspeed level 3 (Home-mode with high fan speeds);3
+;Exhaust fan pressure;21;;;Fanspeed level 4 (Manual boost with timer);4
+;TE30 max {50 ?};22;;;;
+;TE52 H;24;;;;
+;Supply air pressure;25;;;;
+;Extract air pressure;26;;;;
+;TE02 H;27;;;;
+;Service reminder;28;;;;
+;TE49 L;29;;;;
