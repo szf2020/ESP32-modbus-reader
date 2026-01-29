@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modbus Device Configuration</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .device-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .device-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .status-online { background: #d1fae5; color: #065f46; }
+        .status-offline { background: #fee2e2; color: #991b1b; }
+        .status-error { background: #fef3c7; color: #92400e; }
+        .status-unknown { background: #f3f4f6; color: #374151; }
+        .register-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .register-table th,
+        .register-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .register-table th {
+            background: #f9fafb;
+            font-weight: bold;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2563eb;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            border-bottom-color: #2563eb;
+            color: #2563eb;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Modbus Device Configuration</h1>
+            <nav>
+                <a href="/" class="btn btn-secondary">WiFi Config</a>
+                <a href="/dashboard.html" class="btn btn-primary">Dashboard</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="card">
+                <h2>Add New Device</h2>
+                <form id="add-device-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="device-id">Device ID (1-247)</label>
+                            <input type="number" id="device-id" name="device_id" required
+                                   min="1" max="247" placeholder="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="device-name">Device Name</label>
+                            <input type="text" id="device-name" name="name" required
+                                   maxlength="32" placeholder="e.g., eAirMD">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="device-desc">Description</label>
+                            <input type="text" id="device-desc" name="description"
+                                   maxlength="64" placeholder="Device description">
+                        </div>
+                        <div class="form-group">
+                            <label for="poll-interval">Poll Interval (ms)</label>
+                            <input type="number" id="poll-interval" name="poll_interval"
+                                   min="1000" max="60000" value="5000" placeholder="5000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="baudrate">Baudrate</label>
+                            <select id="baudrate" name="baudrate">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="115200">115200</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="device-enabled" name="enabled" checked>
+                                Enable Device
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Device</button>
+                </form>
+            </section>
+
+            <section class="tabs">
+                <div class="tab active" onclick="showTab('devices')">Devices</div>
+                <div class="tab" onclick="showTab('presets')">Presets</div>
+            </section>
+
+            <div id="devices-tab" class="tab-content active">
+                <div id="devices-list"></div>
+            </div>
+
+            <div id="presets-tab" class="tab-content">
+                <section class="card">
+                    <h2>Device Presets</h2>
+                    <div class="form-row">
+                        <button class="btn btn-secondary" onclick="addPreset('eairmd')">Add eAirMD</button>
+                        <button class="btn btn-secondary" onclick="addPreset('ewind')">Add eWind</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <div id="add-register-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Register</h3>
+                    <span class="close" onclick="closeModal()">&times;</span>
+                </div>
+                <form id="add-register-form">
+                    <input type="hidden" id="register-device-id">
+                    <div class="form-group">
+                        <label for="register-address">Address</label>
+                        <input type="number" id="register-address" name="address" required
+                               min="0" max="65535">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-type">Type</label>
+                        <select id="register-type" name="type">
+                            <option value="3">Holding Register (0x03)</option>
+                            <option value="4">Input Register (0x04)</option>
+                            <option value="1">Coil (0x01)</option>
+                            <option value="2">Discrete Input (0x02)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-name">Name</label>
+                        <input type="text" id="register-name" name="name" required
+                               maxlength="32">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-unit">Unit</label>
+                        <input type="text" id="register-unit" name="unit"
+                               maxlength="16" placeholder="°C, %, bar">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="register-scale">Scale</label>
+                            <input type="number" id="register-scale" name="scale"
+                                   step="0.01" value="1.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-offset">Offset</label>
+                            <input type="number" id="register-offset" name="offset"
+                                   step="0.01" value="0.0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="register-writable" name="writable">
+                            Writable
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-desc">Description</label>
+                        <input type="text" id="register-desc" name="description"
+                               maxlength="64">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Register</button>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <p>ESP32-C3 Modbus Manager</p>
+        </footer>
+    </div>
+    <script src="/modbus.js"></script>
+</body>
+</html>

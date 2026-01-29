@@ -595,27 +595,25 @@ export.bat
 
 ## Roadmap
 
-### Version 1.0 (Current)
+### Version 1.1 (Current - 2025-01-29)
 
 - ✅ WiFi manager functionality
 - ✅ Web interface with styled CSS
 - ✅ NVS credential storage
 - ✅ AP mode for configuration
 - ✅ Station mode for normal operation
-- ✅ Basic web interface
+- ✅ Modbus RTU protocol implementation
+- ✅ Modbus Manager component
+- ✅ Device configuration management
+- ✅ Register read/write functionality
+- ✅ Web dashboard for real-time data
+- ✅ REST API for Modbus operations
+- ✅ Support for eAirMD (Enervent Pingvin)
+- ✅ Support for eWind (Kotilämpö)
+- ✅ Fixed wildcard URI handler conflicts
+- ✅ Added navigation between all web pages
 
-### Version 1.1 (In Development)
-
-- [ ] Modbus RTU protocol implementation
-- [ ] Modbus Manager component
-- [ ] Device configuration management
-- [ ] Register read/write functionality
-- [ ] Web dashboard for real-time data
-- [ ] REST API for Modbus operations
-- [ ] Support for Enervent Pingvin
-- [ ] Support for Kotilämpö
-
-### Version 1.2 (Planned)
+### Version 1.2 (In Development)
 
 - [ ] MQTT integration
 - [ ] Historical data logging
@@ -746,6 +744,19 @@ This project is licensed under MIT License - see [LICENSE](LICENSE) file for det
 - Dashboard refresh: ~500-1000ms
 
 ## Changelog
+
+### Version 1.1.0 (2025-01-29)
+
+- Complete Modbus RTU implementation with read/write support
+- Added web-based Modbus device configuration page (`/modbus.html`)
+- Added real-time data dashboard page (`/dashboard.html`)
+- Implemented REST API for Modbus operations
+- Added support for eAirMD and eWind HVAC devices with presets
+- Fixed wildcard URI handler conflicts causing server crashes
+- Replaced wildcard with specific file handlers (15 total, within 16 limit)
+- Added navigation buttons to WiFi config page
+- Fixed navigation between all web pages
+- Updated documentation to reflect completed features
 
 ### Version 1.0.1 (2025-01-27)
 

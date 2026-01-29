@@ -2,7 +2,7 @@
 
 > **Based on MicroDigisoft Tutorial**
 > 
-> Last updated: 2025-01-27
+> Last updated: 2026-01-29
 
 ---
 
@@ -72,9 +72,9 @@ The MAX485 is a low-power transceiver for RS485 and RS422 communication. It prov
 
 - **DE (Driver Enable)**: HIGH = transmit mode, LOW = receive mode
 - **RE (Receiver Enable)**: LOW = receive mode, HIGH = disabled
-- **Common Practice**: Connect DE and RE together for simple control
-  - HIGH = Transmit
-  - LOW = Receive
+- **Separate Control**: Connect DE and RE to separate GPIO pins
+  - DE HIGH + RE LOW = Transmit mode
+  - DE LOW + RE LOW = Receive mode (both LOW for RX)
 
 ---
 
@@ -88,18 +88,20 @@ The MAX485 is a low-power transceiver for RS485 and RS422 communication. It prov
 | GND        | GND              | GND             | Ground                        |
 | RO         | GPIO20           | RX (Back side)  | UART0 RX - Data receive       |
 | DI         | GPIO21           | TX (Back side)  | UART0 TX - Data transmit      |
-| DE         | GPIO7            | D5 (Front side) | Driver enable                 |
-| RE         | GPIO7            | D5 (Front side) | Receiver enable (tie to DE)   |
+| DE         | GPIO7            | D5 (Front side) | Driver enable (HIGH = TX)     |
+| RE         | GPIO6            | D4 (Front side) | Receiver enable (LOW = RX)    |
 | A          | -                | -               | RS485 bus A (to slave device) |
 | B          | -                | -               | RS485 bus B (to slave device) |
 
 ### Alternative Control Pin Options
 
-If D5 (GPIO7) is unavailable, use any other GPIO (except strapping pins):
+If D5 (GPIO7) or D4 (GPIO6) are unavailable, use any other GPIO (except strapping pins):
 
 | XIAO Pin | GPIO  | Notes                       |
 | -------- | ----- | --------------------------- |
+| D10      | GPIO3 | SPI MISO                    |
 | D4       | GPIO6 | I2C SDA, avoid if using I2C |
+| D5       | GPIO7 | Recommended for DE          |
 | D6       | GPIO8 | SPI SCK, strapping pin ⚠️   |
 | D7       | GPIO9 | SPI MISO, strapping pin ⚠️  |
 | D0       | GPIO2 | ADC1_CH2, strapping pin ⚠️  |
@@ -107,7 +109,7 @@ If D5 (GPIO7) is unavailable, use any other GPIO (except strapping pins):
 ### ⚠️ Important Warnings
 
 1. **Strapping Pins**: GPIO2, GPIO8, and GPIO9 are strapping pins that affect boot mode. Avoid using these unless necessary.
-2. **DE/RE Connection**: Always connect DE and RE together for bidirectional communication control.
+2. **DE/RE Connection**: Connect DE and RE to separate GPIO pins for independent control.
 3. **A/B Polarity**: Correct polarity is essential. If communication fails, try swapping A and B lines.
 4. **Termination**: Add 120Ω termination resistor between A and B at both ends of the bus for long runs (>10m).
 5. **Cabling**: Use shielded twisted-pair cables for noise immunity in industrial environments.
@@ -121,13 +123,13 @@ MAX485 Module                XIAO ESP32C3
 | GND         |------------>| GND            |
 | RO          |------------>| RX (GPIO20)    |
 | DI          |------------>| TX (GPIO21)    |
-| DE          |----+        |                |
-| RE          |----+------->| D5 (GPIO7)     |
+| DE          |------------>| D5 (GPIO7)     |
+| RE          |------------>| D4 (GPIO6)     |
 | A           |------------>| A (to device)  |
 | B           |------------>| B (to device)  |
 +-------------+             +----------------+
 
-DE and RE connected together (tie to same GPIO)
+DE and RE connected to separate GPIO pins
 ```
 
 ---
@@ -142,7 +144,8 @@ DE and RE connected together (tie to same GPIO)
 // Pin Definitions
 #define RX_PIN 20      // XIAO RX (back side)
 #define TX_PIN 21      // XIAO TX (back side)
-#define DE_RE_PIN 7    // XIAO D5 (GPIO7)
+#define DE_PIN 7       // XIAO D5 (GPIO7) - Driver Enable
+#define RE_PIN 6       // XIAO D4 (GPIO6) - Receiver Enable
 
 // SoftwareSerial for MAX485
 SoftwareSerial modbusSerial(RX_PIN, TX_PIN);
@@ -157,8 +160,10 @@ void setup() {
   Serial.begin(115200);      // Debug serial
   modbusSerial.begin(9600);  // Modbus serial (9600, 8N1)
 
-  pinMode(DE_RE_PIN, OUTPUT);
-  digitalWrite(DE_RE_PIN, LOW); // Start in receive mode
+  pinMode(DE_PIN, OUTPUT);
+  pinMode(RE_PIN, OUTPUT);
+  digitalWrite(DE_PIN, LOW);  // Disable driver
+  digitalWrite(RE_PIN, LOW);  // Enable receiver
 
   Serial.println("MAX485 Modbus RTU Reader");
 }
@@ -178,14 +183,16 @@ void sendModbusRequest() {
   frame[7] = (crc >> 8) & 0xFF; // CRC High byte
 
   // Enable transmission
-  digitalWrite(DE_RE_PIN, HIGH);
+  digitalWrite(DE_PIN, HIGH);  // Enable driver
+  digitalWrite(RE_PIN, HIGH);  // Disable receiver
 
   // Send request
   modbusSerial.write(frame, 8);
   modbusSerial.flush(); // Wait for transmission complete
 
   // Switch to receive mode
-  digitalWrite(DE_RE_PIN, LOW);
+  digitalWrite(DE_PIN, LOW);   // Disable driver
+  digitalWrite(RE_PIN, LOW);   // Enable receiver
 }
 
 void readModbusResponse() {
@@ -242,14 +249,17 @@ For better performance, use XIAO's hardware UART:
 ```cpp
 #define RX_PIN 20
 #define TX_PIN 21
-#define DE_RE_PIN 7
+#define DE_PIN 7
+#define RE_PIN 6
 
 HardwareSerial &modbusSerial = Serial; // Use Serial0
 
 void setup() {
   modbusSerial.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
-  pinMode(DE_RE_PIN, OUTPUT);
-  digitalWrite(DE_RE_PIN, LOW);
+  pinMode(DE_PIN, OUTPUT);
+  pinMode(RE_PIN, OUTPUT);
+  digitalWrite(DE_PIN, LOW);  // Disable driver
+  digitalWrite(RE_PIN, LOW);  // Enable receiver
 }
 ```
 
