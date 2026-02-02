@@ -315,7 +315,7 @@ If you need to change Modbus configuration:
 3. Changes take effect immediately (no reboot needed)
 4. Test communication after changes
 
-### API Usage
+ ### API Usage
 
 #### WiFi Status
 
@@ -357,16 +357,63 @@ Response:
 }
 ```
 
-#### Read Registers
+#### Add Device
 
 ```bash
-curl http://<device-ip>/api/modbus/1/read/holding/0x100/10
+curl -X POST http://<device-ip>/api/modbus/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_id": 1,
+    "name": "Enervent Pingvin",
+    "description": "Ventilation unit",
+    "poll_interval_ms": 5000,
+    "baudrate": 19200,
+    "enabled": true
+  }'
+```
+
+#### Delete Device
+
+```bash
+curl -X DELETE "http://<device-ip>/api/modbus/devices?device_id=1"
+```
+
+#### Add Register
+
+```bash
+curl -X POST http://<device-ip>/api/modbus/registers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_id": 1,
+    "address": 1,
+    "type": 3,
+    "name": "Room Temp",
+    "unit": "°C",
+    "scale": 0.1,
+    "offset": 0,
+    "writable": false,
+    "description": "Room temperature"
+  }'
+```
+
+#### Delete Register
+
+```bash
+curl -X DELETE "http://<device-ip>/api/modbus/registers?device_id=1&address=1"
 ```
 
 #### Write Register
 
 ```bash
-curl -X POST http://<device-ip>/api/modbus/1/write/holding/0x100 -d "value=20.5"
+curl -X POST "http://<device-ip>/api/modbus/write?device_id=1&address=1" \
+  -H "Content-Type: application/json" \
+  -d '{"value": 22.5}'
+```
+
+#### Read Registers
+
+```bash
+curl http://<device-ip>/api/modbus/1/read/holding/0x100/10
 ```
 
 ## Project Structure
@@ -595,7 +642,21 @@ export.bat
 
 ## Roadmap
 
-### Version 1.1 (Current - 2025-01-29)
+ ### Version 1.2 (Current - 2025-02-03)
+
+- ✅ Added comprehensive input validation to all API handlers
+- ✅ Improved error messages with specific validation feedback
+- ✅ Fixed REST API endpoint conflicts using query parameters
+- ✅ Updated frontend to use query parameter-based API calls
+- ✅ Enhanced device creation validation (device_id range 1-247, baudrate validation, etc.)
+- ✅ Enhanced register creation validation (address range, type validation, etc.)
+- ✅ Enhanced write operation validation
+- ✅ Fixed DELETE device endpoint to use query parameters
+- ✅ Fixed DELETE register endpoint to use query parameters
+- ✅ Fixed write register endpoint to use query parameters
+- ⚠️ Known issue: Adding registers still experiences intermittent errors (to be fixed in next update)
+
+### Version 1.1 (2025-01-29)
 
 - ✅ WiFi manager functionality
 - ✅ Web interface with styled CSS
@@ -613,8 +674,9 @@ export.bat
 - ✅ Fixed wildcard URI handler conflicts
 - ✅ Added navigation between all web pages
 
-### Version 1.2 (In Development)
+ ### Version 1.3 (In Development)
 
+- [ ] Fix register addition errors
 - [ ] MQTT integration
 - [ ] Historical data logging
 - [ ] Alarms and alerts
@@ -743,7 +805,22 @@ This project is licensed under MIT License - see [LICENSE](LICENSE) file for det
 - Modbus RTU write: ~50ms
 - Dashboard refresh: ~500-1000ms
 
-## Changelog
+ ## Changelog
+
+### Version 1.2.0 (2025-02-03)
+
+- Added comprehensive input validation to all API handlers
+- Improved error messages with specific validation feedback
+- Fixed REST API endpoint conflicts by switching from wildcard to query parameters
+- Updated frontend JavaScript to use query parameter-based API calls
+- Enhanced device creation validation (device_id range 1-247, baudrate validation, poll interval limits)
+- Enhanced register creation validation (address range 0-65535, type validation, required fields)
+- Enhanced write operation validation (value field required)
+- Fixed DELETE device endpoint: `DELETE /api/modbus/devices?device_id=X`
+- Fixed DELETE register endpoint: `DELETE /api/modbus/registers?device_id=X&address=Y`
+- Fixed write register endpoint: `POST /api/modbus/write?device_id=X&address=Y`
+- Removed wildcard URI matching which caused server crashes on ESP-IDF v5.1.6
+- Known issue: Adding registers still experiences intermittent errors (addressed in v1.3)
 
 ### Version 1.1.0 (2025-01-29)
 

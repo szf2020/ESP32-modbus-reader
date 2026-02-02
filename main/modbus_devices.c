@@ -244,8 +244,8 @@ esp_err_t modbus_remove_device(uint8_t device_id)
 {
     for (uint8_t i = 0; i < device_count; i++) {
         if (devices[i].device_id == device_id) {
-            for (uint8_t j = i; j < device_count - 1; j++) {
-                memcpy(&devices[j], &devices[j + 1], sizeof(modbus_device_t));
+            if (i < device_count - 1) {
+                memmove(&devices[i], &devices[i + 1], (device_count - 1 - i) * sizeof(modbus_device_t));
             }
             device_count--;
             ESP_LOGI(TAG, "Removed device ID=%d", device_id);
@@ -265,15 +265,19 @@ modbus_device_t* modbus_get_device(uint8_t device_id)
     return NULL;
 }
 
-esp_err_t modbus_list_devices(modbus_device_t *device_list, uint8_t *count)
+modbus_device_t* modbus_list_devices(uint8_t *count)
 {
-    if (device_list == NULL || count == NULL) {
-        return ESP_ERR_INVALID_ARG;
+    if (count == NULL) {
+        return NULL;
     }
 
-    memcpy(device_list, devices, device_count * sizeof(modbus_device_t));
+    if (device_count == 0) {
+        *count = 0;
+        return NULL;
+    }
+
     *count = device_count;
-    return ESP_OK;
+    return devices;
 }
 
 esp_err_t modbus_add_register(uint8_t device_id, const modbus_register_t *reg)
@@ -333,8 +337,8 @@ esp_err_t modbus_remove_register(uint8_t device_id, uint16_t address)
 
     for (uint8_t i = 0; i < device->register_count; i++) {
         if (device->registers[i].address == address) {
-            for (uint8_t j = i; j < device->register_count - 1; j++) {
-                memcpy(&device->registers[j], &device->registers[j + 1], sizeof(modbus_register_t));
+            if (i < device->register_count - 1) {
+                memmove(&device->registers[i], &device->registers[i + 1], (device->register_count - 1 - i) * sizeof(modbus_register_t));
             }
             device->register_count--;
             ESP_LOGI(TAG, "Removed register: Device=%d, Addr=%d", device_id, address);

@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include "esp_err.h"
 
-#define MAX_MODBUS_DEVICES 4
-#define MAX_REGISTERS_PER_DEVICE 50
+#define MAX_MODBUS_DEVICES 1
+#define MAX_REGISTERS_PER_DEVICE 10
 #define DEVICE_NAME_MAX_LEN 32
 #define DEVICE_DESC_MAX_LEN 64
 
@@ -61,7 +61,7 @@ esp_err_t modbus_add_device(const modbus_device_t *device);
 esp_err_t modbus_update_device(uint8_t device_id, const modbus_device_t *device);
 esp_err_t modbus_remove_device(uint8_t device_id);
 modbus_device_t* modbus_get_device(uint8_t device_id);
-esp_err_t modbus_list_devices(modbus_device_t *devices, uint8_t *count);
+modbus_device_t* modbus_list_devices(uint8_t *count);
 
 esp_err_t modbus_add_register(uint8_t device_id, const modbus_register_t *reg);
 esp_err_t modbus_update_register(uint8_t device_id, uint16_t address, const modbus_register_t *reg);

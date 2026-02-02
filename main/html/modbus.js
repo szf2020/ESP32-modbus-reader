@@ -206,7 +206,7 @@ async function deleteDevice(deviceId) {
     }
 
     try {
-        await apiCall(`/devices/${deviceId}`, 'DELETE');
+        await apiCall(`/devices?device_id=${deviceId}`, 'DELETE');
         loadDevices();
         alert('Device deleted successfully!');
     } catch (error) {
@@ -247,7 +247,7 @@ async function deleteRegister(deviceId, address) {
     }
 
     try {
-        await apiCall(`/devices/${deviceId}/registers/${address}`, 'DELETE');
+        await apiCall(`/registers?device_id=${deviceId}&address=${address}`, 'DELETE');
         loadDevices();
         alert('Register deleted successfully!');
     } catch (error) {
@@ -265,7 +265,7 @@ async function writeRegister(deviceId, address) {
     }
 
     try {
-        await apiCall(`/devices/${deviceId}/write/${address}`, 'POST', { value });
+        await apiCall(`/write?device_id=${deviceId}&address=${address}`, 'POST', { value });
         alert('Register written successfully!');
         loadDevices();
     } catch (error) {

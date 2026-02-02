@@ -403,9 +403,10 @@ static void polling_task(void *pvParameters)
             continue;
         }
 
-        modbus_device_t devices[MAX_MODBUS_DEVICES];
+        vTaskDelay(pdMS_TO_TICKS(1));
         uint8_t count;
-        if (modbus_list_devices(devices, &count) == ESP_OK) {
+        modbus_device_t *devices = modbus_list_devices(&count);
+        if (devices != NULL) {
             for (uint8_t i = 0; i < count && polling_active; i++) {
                 if (!devices[i].enabled) {
                     continue;
@@ -473,7 +474,7 @@ esp_err_t modbus_manager_start_polling(void)
     }
 
     polling_active = true;
-    xTaskCreate(polling_task, "modbus_poll", 32768, NULL, 5, &polling_task_handle);
+    xTaskCreate(polling_task, "modbus_poll", 12288, NULL, 5, &polling_task_handle);
     ESP_LOGI(TAG, "Modbus polling started");
     return ESP_OK;
 }
