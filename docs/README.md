@@ -632,6 +632,53 @@ export.bat
 - Check browser console for JavaScript errors
 - Review serial logs for Modbus errors
 
+---
+
+#### Cannot Add Registers with Same Address
+
+**Problem:** "Register address already exists" error when trying to add DI and DO registers with same address
+
+**Solution:**
+
+This is normal behavior. The system now allows the same address for different register types:
+- **DI (Discrete Inputs, Type 2)**: Use address 0-7 for DI1-DI8
+- **DO (Coils, Type 1)**: Use address 0-7 for DO1-DO8
+
+Both can use the same addresses because they use different Modbus function codes:
+- DI uses Function Code 0x02 (Read Discrete Inputs)
+- DO uses Function Code 0x01 (Read Coils)
+
+This is valid per Modbus standard - coils and discrete inputs are separate memory areas.
+
+---
+
+#### Modbus Communication Debugging
+
+**Current Status:** The system logs Modbus communication failures (timeouts, CRC errors, exceptions) but does not log successful read/write operations or frame details.
+
+**Planned Enhancement:** Future version will add comprehensive communication logging:
+
+- Send frame details (device ID, function code, address, quantity, byte count)
+- Receive frame details (bytes received, device ID, function code, byte count)
+- Hex dump of full Modbus frames for protocol analysis
+- Retry attempt tracking with per-attempt results
+- Timing information (TX duration, wait time, RX duration)
+
+**Example Planned Output:**
+```
+I (12345) MODBUS_MANAGER: SENT: DevID=1, FC=0x02, Addr=0, Qty=1, Bytes=8
+I (12345) MODBUS_MANAGER: SENDING: 01 02 00 00 01 89 CA
+I (12345) MODBUS_MANAGER: RECV: 8 bytes, DevID=1, FC=0x02, ByteCount=1
+I (12345) MODBUS_MANAGER: RECEIVED: 01 02 01 01 79 C8
+I (12345) MODBUS_MANAGER: ATTEMPT 1/3: DevID=1, FC=0x02, Addr=0, Result=OK
+```
+
+**Debugging with Current Version:**
+- Check for warning logs: `W (XXXXX) MODBUS_MANAGER: Timeout waiting for response`
+- Check for error logs: `E (XXXXX) MODBUS_PROTOCOL: CRC validation failed`
+- Monitor error counts in web interface (Polls vs Errors)
+- Verify startup logs show: `I (0) MODBUS_MANAGER: UART initialized`
+
 ### Getting Help
 
 - Check [docs/PLAN.md](docs/PLAN.md) for detailed implementation notes
@@ -642,8 +689,11 @@ export.bat
 
 ## Roadmap
 
- ### Version 1.2 (Current - 2025-02-03)
+ ### Version 1.2 (Current - 2025-02-04)
 
+- ✅ Fixed discrete input (Type 2) Modbus function code bug - now uses correct FC 0x02 instead of FC 0x01
+- ✅ Fixed register address validation to allow same address with different types (e.g., DI and DO can both use address 0)
+- ✅ Fixed HTML form missing `name` attribute on device_id hidden input (prevented register addition)
 - ✅ Added comprehensive input validation to all API handlers
 - ✅ Improved error messages with specific validation feedback
 - ✅ Fixed REST API endpoint conflicts using query parameters
@@ -654,7 +704,8 @@ export.bat
 - ✅ Fixed DELETE device endpoint to use query parameters
 - ✅ Fixed DELETE register endpoint to use query parameters
 - ✅ Fixed write register endpoint to use query parameters
-- ⚠️ Known issue: Adding registers still experiences intermittent errors (to be fixed in next update)
+- 📋 Added device documentation for Ebyte M31-AXAX8080G (8DI+8DO)
+- 📝 Planned: Enhanced Modbus communication logging (send/receive frame dumps, timing info, attempt tracking)
 
 ### Version 1.1 (2025-01-29)
 
@@ -700,6 +751,71 @@ export.bat
 - [ ] Custom automation scripts
 
 ## Device Documentation
+
+### Ebyte M31-AXAX8080G (8DI+8DO) Configuration
+
+The Ebyte M31-AXAX8080G is a distributed I/O module with 8 digital inputs and 8 digital outputs, supporting Modbus RTU protocol.
+
+**Device Specifications:**
+- **DI Inputs**: 8 channels (DI1-DI8)
+- **DO Outputs**: 8 channels (DO1-DO8)
+- **Protocol**: Modbus RTU
+- **Default Baudrate**: 9600 bps (configurable via register 0x7530)
+- **Default Device ID**: 1 (hardware DIP + software offset)
+- **Power**: 9-36V DC
+
+**Register Configuration for ESP32:**
+
+**DI (Digital Inputs) - Read-Only Status:**
+| Register | Type | Address Range | Function Code | Notes |
+|----------|-------|---------------|---------------|--------|
+| DI1-DI8 | Discrete Input (2) | 0-7 | 0x02 | 12-24V input, read status only |
+| DI Filter | Holding Register (3) | 0x0DA3 | 0x03 | Filter cycles 1-16, default 6 |
+
+**DO (Digital Outputs) - Read/Write Control:**
+| Register | Type | Address Range | Function Code | Notes |
+|----------|-------|---------------|---------------|--------|
+| DO1-DO8 | Coil (1) | 0-7 | 0x01 | Relay control, writable |
+| DO All On/Off | Coil (1) | 0x0000 | 0x0F | Control multiple DOs |
+
+**Setup Steps:**
+
+1. **Add M31 Device:**
+   - Device ID: 1 (or configured value)
+   - Baudrate: 9600
+   - Poll Interval: 5000ms (5 seconds)
+
+2. **Add DI Registers (Inputs):**
+   - Type: Discrete Input (Type 2)
+   - Addresses: 0, 1, 2, 3, 4, 5, 6, 7 (one per DI)
+   - Names: DI1, DI2, ... DI8
+   - Writable: No (read-only)
+
+3. **Add DO Registers (Outputs):**
+   - Type: Coil (Type 1)
+   - Addresses: 0, 1, 2, 3, 4, 5, 6, 7 (one per DO)
+   - Names: DO1, DO2, ... DO8
+   - Writable: Yes (allows relay control)
+
+**Important Notes:**
+- DI and DO can use the SAME addresses (0-7) because they are different Modbus memory areas
+- DI uses Function Code 0x02 (Read Discrete Inputs)
+- DO uses Function Code 0x01 (Read Coils)
+- DO relays are normally-open (close on write value=1)
+- DI inputs accept 12-24V DC, NPN or PNP active
+- DI green LEDs on M31 indicate valid input (on) vs invalid (off)
+- DO green LEDs on M31 indicate relay closed (on) vs open (off)
+
+**Full Documentation:**
+See `docs/devices/M31_Series_User_Manual.md` for complete register map, configuration options, and troubleshooting.
+
+**Known Issues:**
+- Version 1.2 fixed DI/DO same address restriction - you can now add both types at address 0-7
+- Modbus communication logs will be enhanced in next update for better debugging
+
+---
+
+### Other Device Documentation
 
 Add your device-specific documentation to the `docs/devices/` folder:
 

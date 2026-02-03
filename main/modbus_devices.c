@@ -292,8 +292,9 @@ esp_err_t modbus_add_register(uint8_t device_id, const modbus_register_t *reg)
     }
 
     for (uint8_t i = 0; i < device->register_count; i++) {
-        if (device->registers[i].address == reg->address) {
-            ESP_LOGW(TAG, "Register address %d already exists for device %d", reg->address, device_id);
+        if (device->registers[i].address == reg->address && device->registers[i].type == reg->type) {
+            ESP_LOGW(TAG, "Register address %d (Type %d) already exists for device %d", 
+                      reg->address, reg->type, device_id);
             return ESP_ERR_INVALID_ARG;
         }
     }

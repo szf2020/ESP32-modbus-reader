@@ -426,12 +426,19 @@ static void polling_task(void *pvParameters)
                                                                devices[i].registers[j].address, 1, &value);
                             break;
                         case REGISTER_TYPE_COIL:
-                        case REGISTER_TYPE_DISCRETE:
                             {
                                 uint8_t coil_val;
                                 result = modbus_read_coils(devices[i].device_id,
                                                           devices[i].registers[j].address, 1, &coil_val);
                                 value = coil_val;
+                            }
+                            break;
+                        case REGISTER_TYPE_DISCRETE:
+                            {
+                                uint8_t discrete_val;
+                                result = modbus_read_discrete_inputs(devices[i].device_id,
+                                                                devices[i].registers[j].address, 1, &discrete_val);
+                                value = discrete_val;
                             }
                             break;
                     }
