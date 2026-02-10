@@ -1,10 +1,101 @@
 # ESP32 Modbus Implementation Summary
 
-**Date**: 2026-01-29
+**Date**: 2026-02-11
 
 ## Overview
 
-Successfully implemented full Modbus RTU read/write functionality with web-based configuration and dashboard for the ESP32-C3.
+Successfully implemented full Modbus RTU read/write functionality with web-based configuration and dashboard for ESP32-C3.
+
+## Version History
+
+### v1.3.0 (2026-02-11) - Modbus Communication Logging & Write Fixes
+
+**New Features:**
+
+1. **Modbus Communication Logging**
+   - Hex dump logging for all Modbus frames (compact format: XX XX XX)
+   - TX/RX timing information (milliseconds)
+   - Transaction-level logging with retry attempt tracking
+   - Per-attempt result logging
+   - Configurable via web UI checkbox (dashboard page)
+   - NVS persistence for logging preference (survives reboots)
+   - Default disabled to reduce log noise
+
+2. **Enhanced Write Functionality**
+   - Register type detection in write API endpoint
+   - Automatic function code selection based on register type:
+     - Coil (0x01): Uses FC=0x05 (Write Single Coil)
+     - Holding Register (0x03): Uses FC=0x06 (Write Single Register)
+   - Read-only write protection (rejects writes to Discrete/Input types)
+   - Coil value conversion (non-zero numeric = ON, zero = OFF)
+
+**Bug Fixes:**
+
+1. **Modbus Frame Construction**
+   - Fixed Write Single Coil frame from 9 bytes to 8 bytes
+   - Removed incorrect quantity bytes that caused device timeouts
+   - Added conditional branching for single write operations
+
+2. **JavaScript Write Handler**
+   - Fixed ID lookup to work on both dashboard and device list pages
+   - Added dual ID lookup (tries `dash-write-*` then `write-*`)
+   - Added null check with helpful error message
+
+3. **Web Server Write Handler**
+   - Added register type detection before writing
+   - Implemented type-aware write function dispatch
+   - Increased HTTP server URI handler limit from 16 to 18
+
+4. **Logging Configuration**
+   - Added `modbus_get_register()` support in write handler
+   - Implemented NVS storage for logging preference
+   - Added HTTP endpoints: GET/POST `/api/modbus/logging-config`
+
+**Technical Details:**
+
+- Enhanced `send_request()` with frame dumps and timing
+- Enhanced `receive_response()` with frame dumps and timing
+- Enhanced `execute_modbus_transaction()` with comprehensive logging
+- Fixed `modbus_build_request()` frame construction for FC=0x05/0x06
+- Added `modbus_manager_set_logging()` and `modbus_manager_get_logging()` functions
+- Added `nvs_save_modbus_logging()` and `nvs_load_modbus_logging()` functions
+- Added `loadLoggingConfig()` and `toggleModbusLogging()` JavaScript functions
+- Added "Verbose Logging" checkbox to dashboard header
+
+**Files Modified:**
+- main/nvs_storage.h: Added logging config defines and functions
+- main/nvs_storage.c: Implemented NVS storage for logging preference
+- main/modbus_manager.h: Added logging control functions
+- main/modbus_manager.c: Added comprehensive logging to all Modbus operations
+- main/modbus_protocol.c: Fixed frame construction for single write operations
+- main/web_server.c: Added logging config API and fixed write handler
+- main/html/dashboard.html: Added verbose logging checkbox
+- main/html/modbus.js: Added logging config functions and fixed ID lookup
+
+**Testing:**
+- ✅ Verified coil writes now use FC=0x05 (correct 8-byte frames)
+- ✅ Verified holding register writes still use FC=0x06
+- ✅ Verified logging can be toggled via web UI
+- ✅ Verified frame dumps show in serial monitor when enabled
+- ✅ Verified settings persist across reboots
+- ✅ Verified Ebyte M31 DO outputs turn ON/OFF correctly
+- ✅ Verified no more timeout errors on coil writes
+
+**Log Output Example (when enabled):**
+```
+I (123456) MODBUS_MANAGER: TRANSACTION START: DevID=1, FC=0x05 (Write Single Coil), Addr=1
+I (123457) MODBUS_MANAGER: SENDING: DevID=1, FC=0x05, Addr=1, Bytes=8
+I (123458) MODBUS_MANAGER: FRAME: 01 05 00 01 FF 00 8C 3A
+I (123459) MODBUS_MANAGER: TX completed in 15 ms
+I (124480) MODBUS_MANAGER: RECEIVED: 8 bytes, DevID=1, FC=0x05
+I (124481) MODBUS_MANAGER: FRAME: 01 05 00 01 FF 00 8C 3A
+I (124482) MODBUS_MANAGER: ATTEMPT 1/3: DevID=1, FC=0x05, Addr=1, Result=OK
+I (124483) MODBUS_MANAGER: TRANSACTION SUCCESS: DevID=1, FC=0x05, Attempts=1, Total Time=1027 ms
+```
+
+---
+
+### v1.2.0 (2026-02-03) - Input Validation & Bug Fixes
 
 ## Components Implemented
 
